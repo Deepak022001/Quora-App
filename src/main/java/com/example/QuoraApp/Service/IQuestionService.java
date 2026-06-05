@@ -8,4 +8,5 @@ import reactor.core.publisher.Mono;
 public interface IQuestionService {
     public Mono<QuestionResponseDto>createQuestion(QuestionRequestDto questionRequestDto);
     public Flux<QuestionResponseDto> searchQuestion(String searchTerm,int page,int size);
+    public Flux<QuestionResponseDto>getAllQuestions(String cursor,int size);
 }

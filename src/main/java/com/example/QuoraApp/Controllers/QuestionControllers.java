@@ -17,14 +17,25 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/questions")
 public class QuestionControllers {
     private final IQuestionService questionService;
-    @PostMapping("")
+    @PostMapping()
     public Mono<QuestionResponseDto> createQuestion(@RequestBody QuestionRequestDto questionRequestDto){        
         return questionService.createQuestion(questionRequestDto)
         .doOnSuccess(response->System.out.println("Question created successfully"+response))
         .doOnError(error->System.out.println("Error creating question:"+error));
     }
+    @GetMapping()
+    public Flux<QuestionResponseDto>getAllQuestions(
+        @RequestParam(required = false) String cursor,
+        @RequestParam(defaultValue = "10") int size
+    ){
+        return questionService.getAllQuestions(cursor,size)
+        .doOnError(error->System.out.println("Error fetching quesiton"+error))
+        .doOnComplete(()->System.out.println("Question fetched Successfully"));
+    }
     @GetMapping("/search")
-    public Flux<QuestionResponseDto>searchQuestions(@RequestParam("query") String query,@RequestParam(defaultValue = "0")int page,@RequestParam(defaultValue = "10")int size){
+    public Flux<QuestionResponseDto>searchQuestions(@RequestParam("query") String query
+                    ,@RequestParam(defaultValue = "0")int page
+                    ,@RequestParam(defaultValue = "10")int size){
         return questionService.searchQuestion(query, page,size);
     }
 }

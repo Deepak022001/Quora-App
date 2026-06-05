@@ -3,6 +3,8 @@ package com.example.QuoraApp.Service;
 import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -14,6 +16,7 @@ import com.example.QuoraApp.Dto.QuestionResponseDto;
 import com.example.QuoraApp.adapter.QuestionAdapter;
 import com.example.QuoraApp.models.Question;
 import com.example.QuoraApp.repositories.QuestionRepository;
+import com.example.QuoraApp.utils.CursorUtils;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
@@ -24,7 +27,6 @@ import reactor.core.publisher.Mono;
 public class QuestionService implements IQuestionService {
 
     private final QuestionRepository questionRepository;
-    private final ReactiveMongoTemplate mongoTemplate;
 
     @Override
     public Mono<QuestionResponseDto> createQuestion(QuestionRequestDto questionRequestDto) {
@@ -40,16 +42,35 @@ public class QuestionService implements IQuestionService {
     }
 
     @Override
-    public Flux<QuestionResponseDto> searchQuestion(String searchTerm, int page, int size) {
-        String escapedSearchTerm = Pattern.quote(searchTerm.trim());
-        Criteria titleCriteria = Criteria.where("title").regex(escapedSearchTerm, "i");
-        Criteria contentCriteria = Criteria.where("content").regex(escapedSearchTerm, "i");
-        Query query = new Query(new Criteria().orOperator(titleCriteria, contentCriteria))
-        .with(PageRequest.of(page,size));
-
-        return mongoTemplate.find(query, Question.class)
+    public Flux<QuestionResponseDto> searchQuestion(String searchTerm, int offset, int page) {
+        return questionRepository.findByTitleOrContainingIgnoreCase(searchTerm,PageRequest.of(offset, page))
         .map(QuestionAdapter::toQuestionResponseDto)
-        .doOnError(error->System.out.println("Error searching the question"+error))
-        .doOnComplete(()->System.out.println("Question searched successfully"));
+        .doOnError(error->System.out.println("Error Searchign term"+error))
+        .doOnComplete(() ->
+    System.out.println("Questions searched successfully"));
     }   
+    @Override
+    public Flux<QuestionResponseDto>getAllQuestions(String cursor,int size){
+        Pageable pageable=PageRequest.of(0,size);
+        if(!CursorUtils.isValidCursor(cursor)){
+            return questionRepository.findTop10ByOrderByCreatedAtAsc()
+            .map(QuestionAdapter::toQuestionResponseDto)
+            .take(3)
+            .doOnError(error->System.out.println("Error Fetching question"+error))
+            .doOnComplete(()->System.out.println("Successfully fetched "));
+        }else{
+            // Frontend sends:
+            // "2026-06-05T10:15:30"(String)
+            // Backend converts:
+            // LocalDateTime.parse(cursor)
+            // into:
+            // 2026-06-05T10:15:30
+            LocalDateTime cursorTimeStamp=CursorUtils.parseCursor(cursor);
+            return questionRepository.findByCreatedAtGreaterThanOrderByCreatedAtAsc(cursorTimeStamp,pageable)
+            .map(QuestionAdapter::toQuestionResponseDto)
+            .doOnError(error->System.out.println("Error fetching question"+error))
+            .doOnComplete(()->System.out.println("Successfully fetched"));
+        }
+    }
 }
+// 33:05
