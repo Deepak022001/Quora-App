@@ -39,3 +39,5 @@ public class QuestionControllers {
         return questionService.searchQuestion(query, page,size);
     }
 }
+
+// Configuring kafka with spring

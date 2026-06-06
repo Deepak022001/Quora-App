@@ -72,5 +72,11 @@ public class QuestionService implements IQuestionService {
             .doOnComplete(()->System.out.println("Successfully fetched"));
         }
     }
+
+    @Override
+    public Mono<QuestionResponseDto> getQuestionById(String id) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getQuestionById'");
+    }
 }
 // 33:05
