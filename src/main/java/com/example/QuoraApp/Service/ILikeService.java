@@ -1,7 +1,5 @@
 package com.example.QuoraApp.Service;
 
-import org.springframework.data.mongodb.repository.MongoRepository;
-
 import com.example.QuoraApp.Dto.LikeRequestDto;
 import com.example.QuoraApp.Dto.LikeResponseDto;
 

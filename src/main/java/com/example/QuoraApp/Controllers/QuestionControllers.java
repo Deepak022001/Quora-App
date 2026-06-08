@@ -1,5 +1,6 @@
 package com.example.QuoraApp.Controllers;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +39,14 @@ public class QuestionControllers {
                     ,@RequestParam(defaultValue = "10")int size){
         return questionService.searchQuestion(query, page,size);
     }
+
+    @GetMapping("/{id}")
+    public Mono<QuestionResponseDto>getQuestionById(@PathVariable String id) {
+        return questionService.getQuestionById(id)
+        .doOnSuccess(response->System.out.println("Question fetched Successfully"+response))
+        .doOnError(error->System.out.println("Error fetching question"+error));
+    }
+    
 }
 
 // Configuring kafka with spring

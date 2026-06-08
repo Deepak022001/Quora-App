@@ -1,7 +1,5 @@
 package com.example.QuoraApp.models;
 
-import org.springframework.stereotype.Indexed;
-
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedDate;
@@ -24,19 +22,20 @@ public class Question {
     @Id
     private String id;
 
-    @NotBlank(message="Title is required")
-    @Size(min = 10, max=100,message = "Title must be between 10 and 100 characters")
+    @NotBlank(message = "Title is required")
+    @Size(min = 10, max = 100, message = "Title must be between 10 and 100 characters")
     private String title;
 
     @NotBlank(message = "Content is required")
-    @Size(min = 10 ,max = 100, message = "Content should be between 10 and 100 characters")
+    @Size(min = 10, max = 100, message = "Content should be between 10 and 100 characters")
     private String content;
 
     private String authorId;
 
+    private Integer viewCount;
 
     private Integer views;
-    
+
     @CreatedDate
     private LocalDateTime createdAt;
 
