@@ -1,15 +1,21 @@
 package com.example.QuoraApp.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import com.example.QuoraApp.Dto.QuestionRequestDto;
 import com.example.QuoraApp.Dto.QuestionResponseDto;
+import com.example.QuoraApp.Service.Interfaces.IQuestionIndexService;
+import com.example.QuoraApp.Service.Interfaces.IQuestionService;
 import com.example.QuoraApp.adapter.QuestionAdapter;
 import com.example.QuoraApp.events.ViewCountEvent;
 import com.example.QuoraApp.models.Question;
+import com.example.QuoraApp.models.QuestionElasticDocument;
 import com.example.QuoraApp.producers.KafkaEventproducer;
+import com.example.QuoraApp.repositories.QuestionDocumentRepository;
 import com.example.QuoraApp.repositories.QuestionRepository;
 import com.example.QuoraApp.utils.CursorUtils;
 
@@ -23,7 +29,8 @@ public class QuestionService implements IQuestionService {
 
     private final QuestionRepository questionRepository;
     private final KafkaEventproducer kafkaEventproducer;
-
+    private final IQuestionIndexService iQuestionIndexService;
+    private final QuestionDocumentRepository questionDocumentRepository;
     @Override
     public Mono<QuestionResponseDto> createQuestion(QuestionRequestDto questionRequestDto) {
         Question question = Question.builder()
@@ -32,7 +39,10 @@ public class QuestionService implements IQuestionService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        return questionRepository.save(question).map(QuestionAdapter::toQuestionResponseDto)
+        return questionRepository.save(question)
+                // dumping the next question to elastic search
+                .doOnSuccess(savedQuestion -> iQuestionIndexService.createQuesitionIndex(savedQuestion))
+                .map(QuestionAdapter::toQuestionResponseDto)
                 .doOnSuccess(response -> System.out.println("Question created successfully:" + response))
                 .doOnError(error -> System.out.println("Error creating quesiton :" + error));
     }
@@ -84,4 +94,10 @@ public class QuestionService implements IQuestionService {
                     kafkaEventproducer.publishViewCountEvents(viewCountEvent);
                 });
     }
+
+    @Override
+    public List<QuestionElasticDocument> searchQuestionByElasticsearch(String query) {
+        return questionDocumentRepository.findByTitleContainingOrContentContaining(query, query);
+    }
+
 }
